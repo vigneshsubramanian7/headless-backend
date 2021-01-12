@@ -9,6 +9,7 @@
   "author": "vigneshsubramanian",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^8.2.0",
     "fastify": "^3.9.2",
     "fastify-caching": "^6.0.1",
     "fastify-cors": "^5.1.0",

@@ -2,9 +2,11 @@
 const fastify = require("fastify")({
     logger: false,
 });
+require("dotenv").config();
 
 fastify.register(require("./Plugins/Utility"));
 
+console.log(process.env.PostgresURI);
 //Postgres
 fastify.register(require("fastify-postgres"), {
     connectionString: process.env.PostgresURI,
