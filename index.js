@@ -7,7 +7,7 @@ fastify.register(require("./Plugins/Utility"));
 
 //Postgres
 fastify.register(require("fastify-postgres"), {
-    connectionString: "postgres://vignesh:77723442@34.228.8.206:5432/element",
+    connectionString: process.env.PostgresURI,
 });
 //CORS
 fastify.register(require("fastify-cors"), {
