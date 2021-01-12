@@ -1,0 +1,19 @@
+{
+  "name": "fastfy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "vigneshsubramanian",
+  "license": "ISC",
+  "dependencies": {
+    "fastify": "^3.9.2",
+    "fastify-caching": "^6.0.1",
+    "fastify-cors": "^5.1.0",
+    "fastify-plugin": "^3.0.0",
+    "fastify-postgres": "^3.3.0",
+    "pg": "^8.5.1"
+  }
+}
