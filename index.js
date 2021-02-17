@@ -11,6 +11,21 @@ console.log(process.env.PostgresURI);
 fastify.register(require("fastify-postgres"), {
     connectionString: process.env.PostgresURI,
 });
+//axios
+fastify.register(require("fastify-axios"), {
+    clients: {
+        magento: {
+            baseURL: "https://staging.elementvape.com/rest/default/V1",
+            headers: {
+                Authorization: "Bearer j648jzfscclc01mcfb74fbvjhofvr369",
+            },
+        },
+        magentoWithoutHeaders: {
+            baseURL: "https://staging.elementvape.com/rest/default/V1",
+        },
+    },
+});
+
 //CORS
 fastify.register(require("fastify-cors"), {
     // put your options here
@@ -18,6 +33,7 @@ fastify.register(require("fastify-cors"), {
 
 //Routes
 fastify.register(require("./Plugins/routes"));
+fastify.register(require("./Plugins/checkout"), { prefix: "/checkout" });
 // fastify.register(require("./Plugins/routes"), { prefix: "/api" });
 
 // Run the server!
