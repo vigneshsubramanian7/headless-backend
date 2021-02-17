@@ -17,7 +17,7 @@ fastify.register(require("fastify-axios"), {
         magento: {
             baseURL: "https://staging.elementvape.com/rest/default/V1",
             headers: {
-                Authorization: "Bearer j648jzfscclc01mcfb74fbvjhofvr369",
+                Authorization: `Bearer ${process.env.MagentoAdminToken}`,
             },
         },
         magentoWithoutHeaders: {

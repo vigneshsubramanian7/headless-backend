@@ -1,30 +1,33 @@
 const amqp = require("amqplib/callback_api");
 const axios = require("axios");
 
-amqp.connect("amqp://user:bitnami@localhost", (connError, conn) => {
-    if (connError) {
-        throw connError;
+amqp.connect(
+    `amqp://${process.env.RabbitMQuser}:${process.env.RabbitMQpass}@localhost`,
+    (connError, conn) => {
+        if (connError) {
+            throw connError;
+        }
+        // STEP 2: Create / Connect to Channel
+        conn.createChannel((channelErr, channel) => {
+            if (channelErr) throw channelErr;
+            // STEP 3: Create / Assert a Queue
+            const QUEUE = "GuestCheckout";
+            channel.assertQueue(QUEUE);
+            // STEP4:
+            channel.consume(
+                QUEUE,
+                (e) => {
+                    const id = JSON.parse(e.content);
+                    GuestCheckout(id);
+                    // console.log(id);
+                },
+                {
+                    noAck: true,
+                }
+            );
+        });
     }
-    // STEP 2: Create / Connect to Channel
-    conn.createChannel((channelErr, channel) => {
-        if (channelErr) throw channelErr;
-        // STEP 3: Create / Assert a Queue
-        const QUEUE = "GuestCheckout";
-        channel.assertQueue(QUEUE);
-        // STEP4:
-        channel.consume(
-            QUEUE,
-            (e) => {
-                const id = JSON.parse(e.content);
-                GuestCheckout(id);
-                // console.log(id);
-            },
-            {
-                noAck: true,
-            }
-        );
-    });
-});
+);
 
 function PrepareItems({ sku, qty, option_type_id }, guestCartData) {
     let customOptions = Object.keys(option_type_id).map((key) => {
@@ -60,7 +63,7 @@ function GuestCheckout(data) {
     axios
         .post(baseURL + "/guest-carts", {
             headers: {
-                Authorization: "Bearer j648jzfscclc01mcfb74fbvjhofvr369",
+                Authorization: `Bearer ${process.env.MagentoAdminToken}`,
             },
         })
         .then(({ data: guestCartData, status: guestCartStatus }) => {
@@ -77,8 +80,7 @@ function GuestCheckout(data) {
                             },
                             {
                                 headers: {
-                                    Authorization:
-                                        "Bearer j648jzfscclc01mcfb74fbvjhofvr369",
+                                    Authorization: `Bearer ${process.env.MagentoAdminToken}`,
                                 },
                             }
                         )
@@ -107,8 +109,7 @@ function GuestCheckout(data) {
                             },
                             {
                                 headers: {
-                                    Authorization:
-                                        "Bearer j648jzfscclc01mcfb74fbvjhofvr369",
+                                    Authorization: `Bearer ${process.env.MagentoAdminToken}`,
                                 },
                             }
                         )
@@ -132,8 +133,7 @@ function GuestCheckout(data) {
                                             },
                                             {
                                                 headers: {
-                                                    Authorization:
-                                                        "Bearer j648jzfscclc01mcfb74fbvjhofvr369",
+                                                    Authorization: `Bearer ${process.env.MagentoAdminToken}`,
                                                 },
                                             }
                                         )
