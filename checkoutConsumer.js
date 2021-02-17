@@ -1,5 +1,6 @@
 const amqp = require("amqplib/callback_api");
 const axios = require("axios");
+require("dotenv").config();
 
 amqp.connect(
     `amqp://${process.env.RabbitMQuser}:${process.env.RabbitMQpass}@localhost`,
