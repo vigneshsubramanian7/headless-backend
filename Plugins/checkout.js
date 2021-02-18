@@ -85,33 +85,36 @@ function routes(fastify, options, done) {
             ]
         );
         client.release();
-        amqp.connect("amqp://user:bitnami@localhost", (connError, conn) => {
-            if (connError) {
-                throw connError;
+        amqp.connect(
+            `amqp://${process.env.RabbitMQuser}:${process.env.RabbitMQpass}@localhost`,
+            (connError, conn) => {
+                if (connError) {
+                    throw connError;
+                }
+                // STEP 2: Create / Connect to Channel
+                conn.createChannel((channelErr, channel) => {
+                    if (channelErr) throw channelErr;
+                    // STEP 3: Create / Assert a Queue
+                    const QUEUE = "GuestCheckout";
+                    channel.assertQueue(QUEUE);
+                    // STEP 4: Send Message to QUEUE
+                    channel.sendToQueue(
+                        QUEUE,
+                        Buffer.from(
+                            JSON.stringify({
+                                items,
+                                shipping_address,
+                                billing_address,
+                                shippingmethod,
+                                creditCardInfo,
+                                email,
+                                id: rows[0].id,
+                            })
+                        )
+                    );
+                });
             }
-            // STEP 2: Create / Connect to Channel
-            conn.createChannel((channelErr, channel) => {
-                if (channelErr) throw channelErr;
-                // STEP 3: Create / Assert a Queue
-                const QUEUE = "GuestCheckout";
-                channel.assertQueue(QUEUE);
-                // STEP 4: Send Message to QUEUE
-                channel.sendToQueue(
-                    QUEUE,
-                    Buffer.from(
-                        JSON.stringify({
-                            items,
-                            shipping_address,
-                            billing_address,
-                            shippingmethod,
-                            creditCardInfo,
-                            email,
-                            id: rows[0].id,
-                        })
-                    )
-                );
-            });
-        });
+        );
         return rows[0].id;
     });
 
