@@ -106,6 +106,7 @@ function routes(fastify, options, done) {
                             shippingmethod,
                             creditCardInfo,
                             email,
+                            id: rows[0].id,
                         })
                     )
                 );

@@ -1,6 +1,12 @@
 const amqp = require("amqplib/callback_api");
 const axios = require("axios");
 require("dotenv").config();
+const { Client } = require("pg");
+const connectionString = process.env.PostgresURI;
+
+const client = new Client({
+    connectionString,
+});
 
 amqp.connect(
     `amqp://${process.env.RabbitMQuser}:${process.env.RabbitMQpass}@localhost`,
@@ -59,6 +65,7 @@ function GuestCheckout(data) {
         shippingmethod,
         creditCardInfo,
         email,
+        id,
     } = data;
 
     console.log("flow Started");
@@ -175,13 +182,41 @@ function GuestCheckout(data) {
                                                                     200
                                                                 ) {
                                                                     console.log(
-                                                                        {
-                                                                            TimeEnd: new Date().getTime(),
-                                                                        }
+                                                                        "Payment Success 1",
+                                                                        id
                                                                     );
-                                                                    console.log(
-                                                                        "Payment Success"
-                                                                    );
+                                                                    client
+                                                                        .connect()
+                                                                        .then(
+                                                                            async () => {
+                                                                                console.log(
+                                                                                    "Payment Success 2"
+                                                                                );
+                                                                                await client.query(
+                                                                                    "UPDATE orders SET statusinfo = $1 WHERE id = $2",
+                                                                                    [
+                                                                                        {
+                                                                                            status: true,
+                                                                                            message:
+                                                                                                "Order Placed Successfully",
+                                                                                        },
+                                                                                        id,
+                                                                                    ]
+                                                                                );
+                                                                                console.log(
+                                                                                    {
+                                                                                        TimeEnd: new Date().getTime(),
+                                                                                    }
+                                                                                );
+                                                                                console.log(
+                                                                                    "Payment Success 3"
+                                                                                );
+                                                                            }
+                                                                        )
+                                                                        .finally(
+                                                                            () =>
+                                                                                client.end()
+                                                                        );
                                                                 } else {
                                                                     return res.send(
                                                                         {
@@ -196,6 +231,26 @@ function GuestCheckout(data) {
                                                             console.log(
                                                                 err.response
                                                             );
+                                                            client
+                                                                .connect()
+                                                                .then(
+                                                                    async () => {
+                                                                        await client.query(
+                                                                            "UPDATE orders SET statusinfo = $1 WHERE id = $2",
+                                                                            [
+                                                                                {
+                                                                                    status: false,
+                                                                                    message:
+                                                                                        err.response,
+                                                                                },
+                                                                                id,
+                                                                            ]
+                                                                        );
+                                                                    }
+                                                                )
+                                                                .finally(() =>
+                                                                    client.end()
+                                                                );
                                                             return res.send({
                                                                 err:
                                                                     "Error Payment Information",
@@ -211,6 +266,22 @@ function GuestCheckout(data) {
                                         )
                                         .catch((err) => {
                                             console.log(err.response);
+                                            client
+                                                .connect()
+                                                .then(async () => {
+                                                    await client.query(
+                                                        "UPDATE orders SET statusinfo = $1 WHERE id = $2",
+                                                        [
+                                                            {
+                                                                status: false,
+                                                                message:
+                                                                    err.response,
+                                                            },
+                                                            id,
+                                                        ]
+                                                    );
+                                                })
+                                                .finally(() => client.end());
                                             return res.send({
                                                 err:
                                                     "Error shipping Information",
@@ -225,6 +296,21 @@ function GuestCheckout(data) {
                         )
                         .catch((err) => {
                             console.log(err.response);
+                            client
+                                .connect()
+                                .then(async () => {
+                                    await client.query(
+                                        "UPDATE orders SET statusinfo = $1 WHERE id = $2",
+                                        [
+                                            {
+                                                status: false,
+                                                message: err.response,
+                                            },
+                                            id,
+                                        ]
+                                    );
+                                })
+                                .finally(() => client.end());
                             return res.send({
                                 err: "Error Shipping Methods",
                             });
@@ -236,6 +322,21 @@ function GuestCheckout(data) {
         })
         .catch((err) => {
             console.log(err.response);
+            client
+                .connect()
+                .then(async () => {
+                    await client.query(
+                        "UPDATE orders SET statusinfo = $1 WHERE id = $2",
+                        [
+                            {
+                                status: false,
+                                message: err.response,
+                            },
+                            id,
+                        ]
+                    );
+                })
+                .finally(() => client.end());
             return res.send({ err: "Error Creating Cart" });
         });
 }
