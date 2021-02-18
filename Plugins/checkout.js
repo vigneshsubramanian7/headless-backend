@@ -67,11 +67,12 @@ function routes(fastify, options, done) {
             shippingmethod,
             creditCardInfo,
             email,
+            dobInfo,
         } = req.body;
         const {
             rows,
         } = await client.query(
-            "INSERT INTO orders (items, shippingaddress, billingaddress, shippingmethod, creditcardinfo, email, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+            "INSERT INTO orders (items, shippingaddress, billingaddress, shippingmethod, creditcardinfo, email, status, veratadcred) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
             [
                 items,
                 shipping_address,
@@ -80,6 +81,7 @@ function routes(fastify, options, done) {
                 creditCardInfo,
                 email,
                 0,
+                dobInfo,
             ]
         );
         client.release();

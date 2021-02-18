@@ -50,6 +50,7 @@ function PrepareItems({ sku, qty, option_type_id }, guestCartData) {
 }
 
 function GuestCheckout(data) {
+    console.log({ TimeStart: new Date().getTime() });
     const baseURL = "https://staging.elementvape.com/rest/default/V1";
     const {
         items,
@@ -173,6 +174,11 @@ function GuestCheckout(data) {
                                                                     paymentInfoStatus ===
                                                                     200
                                                                 ) {
+                                                                    console.log(
+                                                                        {
+                                                                            TimeEnd: new Date().getTime(),
+                                                                        }
+                                                                    );
                                                                     console.log(
                                                                         "Payment Success"
                                                                     );
