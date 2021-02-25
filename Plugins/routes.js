@@ -62,6 +62,18 @@ function routes(fastify, options, done) {
         return rows;
     });
 
+    fastify.get("/searchProduct/:search", async (req, res) => {
+        const client = await fastify.pg.connect();
+        const { search } = req.params;
+        const {
+            rows,
+        } = await client.query(
+            "SELECT name, price, url_key, image FROM products WHERE LOWER(name) LIKE LOWER($1) LIMIT 10",
+            [search + "%"]
+        );
+        client.release();
+        return rows;
+    });
     done();
 }
 
