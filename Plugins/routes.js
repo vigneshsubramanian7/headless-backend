@@ -68,7 +68,7 @@ function routes(fastify, options, done) {
         const {
             rows,
         } = await client.query(
-            "SELECT name, price, url_key, image FROM products WHERE LOWER(name) LIKE LOWER($1) LIMIT 10",
+            "SELECT name, price, url_key, image FROM products WHERE LOWER(name) LIKE LOWER($1) LIMIT 5",
             [search + "%"]
         );
         client.release();
