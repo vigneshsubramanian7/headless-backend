@@ -18,6 +18,7 @@
     "fastify-cors": "^5.1.0",
     "fastify-plugin": "^3.0.0",
     "fastify-postgres": "^3.3.0",
-    "pg": "^8.5.1"
+    "pg": "^8.5.1",
+    "uniqid": "^5.3.0"
   }
 }

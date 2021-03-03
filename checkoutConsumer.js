@@ -66,32 +66,42 @@ function GuestCheckout(data) {
         creditCardInfo,
         email,
         id,
+        magentouserid,
+        loginUserToken,
     } = data;
 
     console.log("flow Started");
+    let isGuest = magentouserid ? "carts/mine" : "guest-carts";
+    const token = loginUserToken
+        ? loginUserToken
+        : process.env.MagentoAdminToken;
+    const header = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    };
+    console.log({
+        header,
+        URL: baseURL + "/" + isGuest,
+        BODY: JSON.stringify(PrepareItems(items[0], "guestCartData")),
+    });
     axios
-        .post(baseURL + "/guest-carts", {
-            headers: {
-                Authorization: `Bearer ${process.env.MagentoAdminToken}`,
-            },
-        })
-        .then(({ data: guestCartData, status: guestCartStatus }) => {
-            console.log("1 guest-carts");
+        .post(baseURL + "/" + isGuest, "", header)
+        .then(async ({ data: guestCartData, status: guestCartStatus }) => {
+            console.log({ guestCartData });
             if (guestCartStatus === 200) {
                 const addItems = items.map((item, i) => {
                     const formatedItem = PrepareItems(item, guestCartData);
-                    console.log(formatedItem, i);
+                    if (!magentouserid) {
+                        isGuest = "guest-carts/" + guestCartData;
+                    }
                     return axios
                         .post(
-                            `${baseURL}/guest-carts/${guestCartData}/items`,
+                            `${baseURL}/${isGuest}/items`,
                             {
                                 cartItem: formatedItem,
                             },
-                            {
-                                headers: {
-                                    Authorization: `Bearer ${process.env.MagentoAdminToken}`,
-                                },
-                            }
+                            header
                         )
                         .then(
                             ({
@@ -112,18 +122,14 @@ function GuestCheckout(data) {
                     console.log("1 guest-carts / addProductsData");
                     axios
                         .post(
-                            `${baseURL}/guest-carts/${guestCartData}/estimate-shipping-methods`,
+                            `${baseURL}/${isGuest}/estimate-shipping-methods`,
                             {
                                 address: shipping_address,
                             },
-                            {
-                                headers: {
-                                    Authorization: `Bearer ${process.env.MagentoAdminToken}`,
-                                },
-                            }
+                            header
                         )
                         .then(
-                            ({
+                            async ({
                                 data: shippingmethodData,
                                 status: shippingmethodStatus,
                             }) => {
@@ -131,7 +137,7 @@ function GuestCheckout(data) {
                                 if (shippingmethodStatus === 200) {
                                     axios
                                         .post(
-                                            `${baseURL}/guest-carts/${guestCartData}/shipping-information`,
+                                            `${baseURL}/${isGuest}/shipping-information`,
                                             {
                                                 addressInformation: {
                                                     shipping_address,
@@ -140,14 +146,10 @@ function GuestCheckout(data) {
                                                     shipping_method_code: shippingmethod,
                                                 },
                                             },
-                                            {
-                                                headers: {
-                                                    Authorization: `Bearer ${process.env.MagentoAdminToken}`,
-                                                },
-                                            }
+                                            header
                                         )
                                         .then(
-                                            ({
+                                            async ({
                                                 data: shippingInformationData,
                                                 status: shippingInformationStatus,
                                             }) => {
@@ -160,17 +162,18 @@ function GuestCheckout(data) {
                                                 ) {
                                                     axios
                                                         .post(
-                                                            `${baseURL}/guest-carts/${guestCartData}/payment-information`,
+                                                            `${baseURL}/${isGuest}/payment-information`,
                                                             {
                                                                 email: email,
                                                                 paymentMethod: creditCardInfo,
                                                                 billing_address: billing_address
                                                                     ? billing_address
                                                                     : shipping_address,
-                                                            }
+                                                            },
+                                                            header
                                                         )
                                                         .then(
-                                                            ({
+                                                            async ({
                                                                 data: paymentInfoData,
                                                                 status: paymentInfoStatus,
                                                             }) => {
@@ -218,6 +221,17 @@ function GuestCheckout(data) {
                                                                                 client.end()
                                                                         );
                                                                 } else {
+                                                                    await client.query(
+                                                                        "UPDATE orders SET statusinfo = $1 WHERE id = $2",
+                                                                        [
+                                                                            {
+                                                                                status: false,
+                                                                                message:
+                                                                                    "Error Payment Information",
+                                                                            },
+                                                                            id,
+                                                                        ]
+                                                                    );
                                                                     return res.send(
                                                                         {
                                                                             err:
@@ -257,6 +271,17 @@ function GuestCheckout(data) {
                                                             });
                                                         });
                                                 } else {
+                                                    await client.query(
+                                                        "UPDATE orders SET statusinfo = $1 WHERE id = $2",
+                                                        [
+                                                            {
+                                                                status: false,
+                                                                message:
+                                                                    "Error shipping Information",
+                                                            },
+                                                            id,
+                                                        ]
+                                                    );
                                                     return res.send({
                                                         err:
                                                             "Error shipping Information",
@@ -288,6 +313,17 @@ function GuestCheckout(data) {
                                             });
                                         });
                                 } else {
+                                    await client.query(
+                                        "UPDATE orders SET statusinfo = $1 WHERE id = $2",
+                                        [
+                                            {
+                                                status: false,
+                                                message:
+                                                    "Error Shipping Methods",
+                                            },
+                                            id,
+                                        ]
+                                    );
                                     return res.send({
                                         err: "Error Shipping Methods",
                                     });
@@ -317,6 +353,16 @@ function GuestCheckout(data) {
                         });
                 });
             } else {
+                await client.query(
+                    "UPDATE orders SET statusinfo = $1 WHERE id = $2",
+                    [
+                        {
+                            status: false,
+                            message: "Error Creating Cart",
+                        },
+                        id,
+                    ]
+                );
                 return res.send({ err: "Error Creating Cart" });
             }
         })

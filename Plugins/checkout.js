@@ -68,11 +68,11 @@ function routes(fastify, options, done) {
             creditCardInfo,
             email,
             dobInfo,
+            magentouserid = null,
+            loginUserToken,
         } = req.body;
-        const {
-            rows,
-        } = await client.query(
-            "INSERT INTO orders (items, shippingaddress, billingaddress, shippingmethod, creditcardinfo, email, status, veratadcred) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+        const { rows } = await client.query(
+            "INSERT INTO orders (items, shippingaddress, billingaddress, shippingmethod, creditcardinfo, email, status, veratadcred, statusinfo, magentouserid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
             [
                 items,
                 shipping_address,
@@ -82,6 +82,11 @@ function routes(fastify, options, done) {
                 email,
                 0,
                 dobInfo,
+                {
+                    error: null,
+                    success: "Stage 1",
+                },
+                magentouserid,
             ]
         );
         client.release();
@@ -109,6 +114,8 @@ function routes(fastify, options, done) {
                                 creditCardInfo,
                                 email,
                                 id: rows[0].id,
+                                magentouserid,
+                                loginUserToken,
                             })
                         )
                     );
